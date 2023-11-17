@@ -17,6 +17,7 @@
             <RowDefinition/>
             <RowDefinition Height="auto"/>
             <RowDefinition/>
+            <RowDefinition Height="0.3*"/>
         </Grid.RowDefinitions>
         
         <StackPanel Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -29,13 +30,19 @@
             <Button Content="Stop Server" Command="{Binding StopCommand}" Padding="5" Margin="10 10 10 10"/>
         </StackPanel>
 
-        <RichTextBox Grid.Row="1" Margin="5" VerticalScrollBarVisibility="Auto"/>
+        <TextBox Grid.Row="1" Margin="5" VerticalScrollBarVisibility="Auto" 
+                 Text="{Binding DataReceived}"/>
         
         <GridSplitter Grid.Row="2" Height="5"/>
 
-        <RichTextBox Grid.Row="3" Margin="5" VerticalScrollBarVisibility="Auto"/>
+        <TextBox Grid.Row="3" Margin="5" VerticalScrollBarVisibility="Auto" 
+                 Text="{Binding DataToSend}" MaxLines="1000"/>
 
-        <ListView Grid.Column="1" Grid.Row="1" Grid.RowSpan="3" Margin="5"/>
+        <Button Grid.Row="4" Content="Send Data" Command="{Binding SendCommand}" Padding="5" Margin="10 10 10 10"/>
+
+        <ListView Grid.Column="1" Grid.Row="1" Grid.RowSpan="4" Margin="5" 
+                  ItemsSource="{Binding Clients}"
+                  SelectedItem="{Binding SelectedClient}"/>
 
     </Grid>
     

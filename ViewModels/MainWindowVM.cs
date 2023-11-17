@@ -2,7 +2,9 @@
 using SuperSimpleTcp;
 using System;
 using System.Collections.ObjectModel;
+using System.Text;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace tcpserver
 {
@@ -19,7 +21,9 @@ namespace tcpserver
 
             StartCommand = new RelayCommand(StartServer, checkserveractivestatus);
             StopCommand = new RelayCommand(StopServer, checkserverinactivestatus);
+            SendCommand = new RelayCommand(SendData, checkserverinactivestatus);
         }
+
         #endregion Constructor
 
         #region TCPServer IP & Port
@@ -55,6 +59,8 @@ namespace tcpserver
         }
         #endregion TCP Server
 
+        private Dispatcher dispatcher = Dispatcher.CurrentDispatcher;
+
         #region Client List
         private ObservableCollection<string> _clients;
 
@@ -75,9 +81,24 @@ namespace tcpserver
 
         #endregion Client List
 
+        #region Selected Client
+        private string _selectedClient;
+
+        public string SelectedClient
+        {
+            get { return _selectedClient; }
+            set { 
+                _selectedClient = value; 
+                OnPropertyChanged(nameof(SelectedClient));
+            }
+        }
+
+        #endregion Selected Client
+
         #region Button Commands
         public ICommand StartCommand { get; set; }
         public ICommand StopCommand { get; set; }
+        public ICommand SendCommand { get; set; }
         #endregion Button Commands
 
         #region Button Command Methods
@@ -88,7 +109,6 @@ namespace tcpserver
                 foreach (var item in Clients)
                 {
                     TCPServer.DisconnectClient(item);
-                    Clients.Remove(item);
                 }
             }
 
@@ -103,6 +123,21 @@ namespace tcpserver
             simpleTcpServer.Events.ClientConnected += ClientConnected;
             simpleTcpServer.Start();
             TCPServer = simpleTcpServer;
+        }
+
+        private void SendData(object obj)
+        {
+            if(SelectedClient != null)
+            {
+                TCPServer.Send(SelectedClient, Encoding.ASCII.GetBytes(DataToSend));
+            }
+            else
+            {
+                foreach (var item in Clients)
+                {
+                    TCPServer.Send(item, Encoding.ASCII.GetBytes(DataToSend));
+                }
+            }
         }
         #endregion Button Command Methods
 
@@ -133,18 +168,57 @@ namespace tcpserver
         #region Event Methods
         private void DataReceivedFromClient(object? sender, DataReceivedEventArgs e)
         {
-            throw new NotImplementedException();
+            var clientid = e.IpPort;
+            var data = Encoding.ASCII.GetString(e.Data);
+            DataReceived += $"{clientid}: {data}{Environment.NewLine}";
         }
 
         private void ClientDisconnected(object? sender, ConnectionEventArgs e)
         {
-            Clients.Remove(e.IpPort);
+            dispatcher.Invoke(new Action(() =>
+            {
+                Clients.Remove(e.IpPort);
+            }));
+            
         }
 
         private void ClientConnected(object? sender, ConnectionEventArgs e)
         {
-            Clients.Add(e.IpPort);
+            dispatcher.Invoke(new Action(() =>
+            {
+                Clients.Add(e.IpPort);
+            }));
+            
         }
         #endregion Event Methods
+
+        #region Data Received
+        private string _dataReceived;
+
+        public string DataReceived
+        {
+            get { return _dataReceived; }
+            set { 
+                _dataReceived = value; 
+                OnPropertyChanged(nameof(DataReceived));
+            }
+        }
+
+        #endregion Data Received
+
+        #region Data to be sent
+        private string _dataToSend;
+
+        public string DataToSend
+        {
+            get { return _dataToSend; }
+            set { 
+                _dataToSend = value; 
+                OnPropertyChanged(nameof(DataToSend));
+            }
+        }
+
+        #endregion Data to be sent
+
     }
 }
